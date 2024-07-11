@@ -1,18 +1,55 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.17;
 // via @iamwhitelights
+pragma solidity ^0.8.17;
 contract EncodeURI {
-    /*
-    I was asked not to publish the full code for the EncodeURI contract
-    but I can provide a brief description of its functionality:
-  
-    It provides a function to encode strings for safe use in URIs.
-    
-    It keeps alphanumeric characters unchanged while converting other 
-    characters to percent-encoded format. 
-    
-    This process ensures that strings can be safely used in web addresses or 
-    similar contexts where certain characters need special handling.
-    */
+    /**
+     * @dev URI Encoding/Decoding Hex Table
+     */
+    bytes internal constant TABLE = "0123456789ABCDEF";
+
+    /**
+     * @dev URI encodes the provided string. Gas optimized like crazy.
+     */
+    function encodeURI(string memory str_) public pure returns (string memory) {
+        bytes memory input = bytes(str_);
+        uint256 inputLength = input.length;
+        uint256 outputLength = 0;
+
+        for (uint256 i = 0; i < inputLength; i++) {
+            bytes1 b = input[i];
+
+            if (
+                (b >= 0x30 && b <= 0x39) ||
+                (b >= 0x41 && b <= 0x5a) ||
+                (b >= 0x61 && b <= 0x7a)
+            ) {
+                outputLength++;
+            } else {
+                outputLength += 3;
+            }
+        }
+
+        bytes memory output = new bytes(outputLength);
+        uint256 j = 0;
+
+        for (uint256 i = 0; i < inputLength; i++) {
+            bytes1 b = input[i];
+
+            if (
+                (b >= 0x30 && b <= 0x39) ||
+                (b >= 0x41 && b <= 0x5a) ||
+                (b >= 0x61 && b <= 0x7a)
+            ) {
+                output[j++] = b;
+            } else {
+                bytes1 b1 = TABLE[uint8(b) / 16];
+                bytes1 b2 = TABLE[uint8(b) % 16];
+                output[j++] = 0x25; // '%'
+                output[j++] = b1;
+                output[j++] = b2;
+            }
+        }
+
+        return string(output);
+    }
 }
