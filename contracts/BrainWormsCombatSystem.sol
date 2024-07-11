@@ -100,6 +100,12 @@ contract BrainWormsCombatSystem is IBrainWormsCombatSystem, Ownable {
     /// @dev PRNG for generating random numbers, thanks Vectorized
     using LibPRNG for *;
 
+    /// @dev The last block a fight occurred to prevent spamming
+    mapping(uint256 => uint256) private lastFightBlock;
+
+    /// @dev The allowed contracts that can call the fight function
+    mapping(address => bool) public allowedContracts;
+
     // Combat states
     uint8 constant ATTACKER_GOES_FIRST = 0;
     uint8 constant P1_CRITICAL_HIT = 1;
@@ -153,6 +159,27 @@ contract BrainWormsCombatSystem is IBrainWormsCombatSystem, Ownable {
         uint16 p2PVPPoints_,
         bool attackType_
     ) external returns (bool didAttackerWin, uint16[2] memory PvpPoints) {
+        // Ensure the caller is not a contract
+        // The PRNG was never really meant to be secure as its
+        // not balance altering function
+        require(
+            !isContract(msg.sender) || allowedContracts[msg.sender],
+            "Caller is not allowed to interact with this contract"
+        );
+
+        // Ensure the worms have not fought in this block to prevent spamming
+        require(
+            lastFightBlock[tokenIdAttacker_] < block.number,
+            "Attacker has already fought in this block"
+        );
+        require(
+            lastFightBlock[tokenIdDefender_] < block.number,
+            "Defender has already fought in this block"
+        );
+
+        lastFightBlock[tokenIdAttacker_] = block.number;
+        lastFightBlock[tokenIdDefender_] = block.number;
+
         // Ensure the worms are not the same
         require(
             tokenIdAttacker_ != tokenIdDefender_,
@@ -506,6 +533,22 @@ contract BrainWormsCombatSystem is IBrainWormsCombatSystem, Ownable {
         return (PvpPoints, int8(int256(pointsChange)));
     }
 
+    /// @notice Check if an address is a contract
+    /// @dev This function is used to prevent contracts from fighting
+    ///      in the Brain Worms Combat System. Honestly I knew this was
+    ///      going to be an issue but figured it would be funny to watch
+    ///      someone blast other people's worms by exploiting the PRNG.
+    ///      If that was you, hit me up on twitter and I'll mail you a
+    ///      Brain Worm gift for taking the time to screw with it.
+    /// @param account The address to check
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
+    }
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Private Functions
 
@@ -563,5 +606,15 @@ contract BrainWormsCombatSystem is IBrainWormsCombatSystem, Ownable {
         address resourceHarvesting_
     ) external onlyOwner {
         resourceHarvesting = IBrainWormsResourceHarvesting(resourceHarvesting_);
+    }
+
+    /// @notice Set allowed contracts that can call the fight function
+    /// @dev to prevent abuse
+    /// @param contractAddress The address of the contract
+    function setContractAllowance(
+        address contractAddress,
+        bool isAllowed
+    ) external onlyOwner {
+        allowedContracts[contractAddress] = isAllowed;
     }
 }
