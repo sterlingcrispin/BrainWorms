@@ -1,0 +1,30 @@
+{
+  "name": "Brain Worms",
+  "license": "MIT",
+  "version": "0.0.1",
+  "description": "Brain Worm Research Program",
+  "files": [
+    "src/**/*.sol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sterlingcrispin/BrainWorms.git"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "dotenv": "^16.4.5",
+    "fs": "^0.0.1-security",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.3.11",
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomicfoundation/hardhat-verify": "^2.0.8",
+    "eth-gas-reporter": "^0.2.27",
+    "ethers": "5.7",
+    "hardhat": "^2.20.1",
+    "hardhat-gas-reporter": "^1.0.10"
+  }
+}
